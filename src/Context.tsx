@@ -9,6 +9,7 @@ import {User} from "./types";
 type SearchUserContextType = {
     searchValue: string;
     user: User | undefined;
+    isLoading: boolean;
     setSearchValue: React.Dispatch<React.SetStateAction<string>>;
     handleInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
     handleClickSearchButton: () => void;
@@ -23,31 +24,37 @@ export const SearchUserContext = React.createContext<SearchUserContextType>(null
 const SearchUserProvider: React.FC<SearchUserProviderProps> = ({ children }) => {
 
     const [searchValue, setSearchValue] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const [user, setUser] = useState<User | undefined>(undefined);
 
     const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchValue((event.target as HTMLInputElement).value);
     }, [])
 
-    const handleClickSearchButton = useCallback(() => {
+    const handleClickSearchButton = useCallback(async () => {
+        if (isLoading) return ;
         if (searchValue === '') return toast.info("You should write nickname")
-        fetchSearchUser(searchValue)
+        setIsLoading(true);
+        await fetchSearchUser(searchValue)
             .then(res => setUser(res.data))
             .catch(() => {
                 setUser(undefined);
                 toast.info("We can't find user...")
             })
-    }, [searchValue])
+        setIsLoading(false)
+    }, [searchValue, isLoading])
 
     const contextValue = useMemo(() => ({
         searchValue,
         user,
+        isLoading,
         setSearchValue,
         handleInputChange,
         handleClickSearchButton,
     }), [
         searchValue,
         user,
+        isLoading,
         setSearchValue,
         handleInputChange,
         handleClickSearchButton
